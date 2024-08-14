@@ -48,3 +48,20 @@ def taxi_zones_file() -> None:
     )
     with open(constants.TAXI_ZONES_FILE_PATH, 'wb') as output_file:
         output_file.write(raw_zones.content)
+@asset(deps=[taxi_zones_file])
+def taxi_zones()-> None:
+    """
+      The raw taxi zones dataset, loaded into a DuckDB database
+    """
+    sql_query = """
+      create or replace table zones as (
+        select
+          LocationID as zone_id,
+          Borough as borough,
+          Zone as zone,
+          the_geom as geometry
+        from 'data/raw/taxi_zones.csv'
+      );
+    """
+    conn = duckdb.connect(os.getenv("DUCKDB_DATABASE"))
+    conn.execute(sql_query)
